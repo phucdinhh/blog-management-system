@@ -10,6 +10,8 @@ import (
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/requestid"
+	"github.com/gofiber/fiber/v2/utils"
 	"github.com/rs/zerolog/log"
 )
 
@@ -28,6 +30,10 @@ func main() {
 
 	app := fiber.New(fiber.Config{ErrorHandler: errorHandler})
 
+	app.Use(requestid.New(requestid.Config{
+		Generator: utils.UUIDv4,
+	}))
+
 	api := app.Group("/api", middleware.LoggerMiddleware())
 	v1 := api.Group("/v1")
 	v1.Get("/health", http.NewHealthHandler(mongoClient).Check)
@@ -45,6 +51,16 @@ func errorHandler(ctx *fiber.Ctx, err error) error {
 		status = fiberErr.Code
 	}
 
-	log.Error().Err(err).Str("path", ctx.Path()).Msg("request failed")
-	return ctx.Status(status).JSON(fiber.Map{"message": fiber.ErrInternalServerError.Message})
+	requestID, _ := ctx.Locals("requestid").(string)
+
+	log.Error().
+		Err(err).
+		Str("request_id", requestID).
+		Str("path", ctx.Path()).
+		Msg("request failed")
+
+	return ctx.Status(status).JSON(fiber.Map{
+		"message":    fiber.ErrInternalServerError.Message,
+		"request_id": requestID,
+	})
 }
