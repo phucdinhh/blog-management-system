@@ -24,6 +24,12 @@ func LoggerMiddleware() fiber.Handler {
 
 	return fiberzerolog.New(fiberzerolog.Config{
 		Logger: &logger,
-		Fields: []string{"latency", "status", "method", "path", "error"},
+		Fields: []string{
+			fiberzerolog.FieldMethod,
+			fiberzerolog.FieldPath,
+			fiberzerolog.FieldStatus,
+			fiberzerolog.FieldLatency,
+			fiberzerolog.FieldRequestID,
+		},
 	})
 }
