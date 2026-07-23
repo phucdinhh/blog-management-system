@@ -10,6 +10,7 @@ import (
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 	"github.com/gofiber/fiber/v2/utils"
 	"github.com/rs/zerolog/log"
@@ -33,8 +34,10 @@ func main() {
 	app.Use(requestid.New(requestid.Config{
 		Generator: utils.UUIDv4,
 	}))
+	app.Use(middleware.LoggerMiddleware())
+	app.Use(recover.New())
 
-	api := app.Group("/api", middleware.LoggerMiddleware())
+	api := app.Group("/api")
 	v1 := api.Group("/v1")
 	v1.Get("/health", http.NewHealthHandler(mongoClient).Check)
 
